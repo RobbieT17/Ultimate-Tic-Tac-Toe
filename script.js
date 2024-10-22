@@ -4,6 +4,7 @@ const NUM_TILES = 9
 let currentPlayer = 'X'
 let gameWon = false
 
+// Win conditions, must get 3 marks in a row
 function win(grid, mark) {
     const marking = (c, i) => Array.from(grid.childNodes)[i].classList.contains(c)
 
@@ -59,6 +60,7 @@ function winBoard(board, tiles, mark) {
     }
 }
 
+// Checks if a player won a board
 function checkWinBoardConditions(board) {
     const tiles = Array.from(board.childNodes)
 
@@ -72,6 +74,7 @@ function checkWinBoardConditions(board) {
     else if (tiles.filter(tile => tile.classList.contains('free-tile')).length === 0) board.classList.add('tie')  
 }
 
+// Check if tile is unavailable to play on
 function isTerminatedBoard(board) {
     return board.classList.contains('x-won') || board.classList.contains('o-won') || board.classList.contains('tie')
 }
@@ -98,6 +101,7 @@ function switchPlayer() {
     document.getElementById('turn').textContent = 'Player ' + (isPlayer1 ? '2' : '1') + '\'s Turn'
 }
 
+// Updates state of the game board
 function update(board, tileId) {
     checkWinBoardConditions(board) // Check if board has been won/tied
   
@@ -132,20 +136,34 @@ function markTile(board, tile, tileId) {
     } 
 }
 
-function initializeBoards() {
+// Makes game board
+function initializeBoards(obj) {
+    currentPlayer = obj ? obj.current : 'X'
     // Creates Board
     for (let i = 0; i < NUM_BOARDS; i++){
         const board = document.createElement('div')
-        board.classList.add('board')
-        board.classList.add('active-board')
         board.id = 'board' + i;
 
+        if (obj) obj[board.id].classList.forEach(c => board.classList.add(c))
+        else {
+            board.classList.add('board')
+            board.classList.add('active-board') 
+        }
+        
         // Create Tiles
         for (let j = 0; j < NUM_TILES; j++) {
             const tile = document.createElement('div')
-            tile.classList.add('tile')
-            tile.classList.add('free-tile')
 
+            if (obj) {
+                const tileObj = obj[board.id].tiles['tile' + j]
+                tileObj.classId.forEach(c => tile.classList.add(c))
+                tile.textContent = tileObj.mark
+            }
+            else {
+                tile.classList.add('tile')
+                tile.classList.add('free-tile') 
+            }
+            
             tile.addEventListener('click', () => markTile(board, tile, j))
             board.appendChild(tile)
         }
@@ -153,7 +171,42 @@ function initializeBoards() {
         document.getElementById('theBoard').appendChild(board)
     }
 
-    document.getElementById('turn').textContent = "Player 1's Turn"
+    const playerNum = currentPlayer === 'X' ? '1\'s Turn' : '2\'s Turn'
+    document.getElementById('turn').textContent = 'Player ' + playerNum
 }
 
-document.addEventListener('DOMContentLoaded', () => initializeBoards());
+// Clears data from localStorage and rebuilds HTML
+function clearData() {
+    localStorage.clear()
+    document.getElementById('theBoard').innerHTML = ''
+    initializeBoards()
+}
+
+// Saves current state of board into localStorage
+function saveData() {
+    const gameData = 
+    Array.from(document.getElementById('theBoard').querySelectorAll('.board'))
+    .reduce((obj, board, i) => {
+        obj['board' + i] = {
+            classList: Array.from(board.classList),
+            tiles: Array.from(board.childNodes).reduce((acc, tile, j) => {
+                acc['tile' + j] = {mark: tile.textContent, classId: Array.from(tile.classList)}
+                return acc
+            }, {})
+        }
+        return obj
+    }, {})
+
+    gameData['current'] = currentPlayer
+
+    localStorage.setItem('saveData', JSON.stringify(gameData))
+
+    alert('Game Saved!')
+}
+
+// Loads everything after DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    initializeBoards(JSON.parse(localStorage.getItem('saveData'))) // Loads data from localStorage
+    document.getElementById('new-game').addEventListener('click', clearData)
+    document.getElementById('save-game').addEventListener('click', saveData)
+});
