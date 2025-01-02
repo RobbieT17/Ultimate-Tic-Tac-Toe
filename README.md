@@ -10,4 +10,4 @@ Create an online multiplayer experience so you can play with anyone at anytime.
 All the front-end coding is done. You can save games and come back to them later (this won't be a permenant featurea). All that is left is the multiplayer feature.
 
 ## How to Run
-If you're using VSCode, add the live server extension then open. Right click on `index.html` then select "Open with Liver Server".
+If you're using VSCode, add the live server extension. Right click on `index.html` then select "Open with Liver Server".
